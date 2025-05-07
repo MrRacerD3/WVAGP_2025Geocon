@@ -1,0 +1,53 @@
+// This code snippit is used to calculate a unique ID for Culverts (CV). 
+// It uses a Grid to asign a "region code" and IDs are auto incrementing within each individual Grid Square.
+// Grid intersection is determined by the lines centroid.
+
+// Declare Variable and set it to array of grid square names
+var regions = FeatureSetByName($map, "Martinsburg_City_Grid_GridOnly", ['PageName'])
+// Use while statement to keep ID from calculating preemptively 
+while (IsEmpty(Geometry($feature)) && Geometry($feature) == null) {
+    
+}
+// Declare Variable and set it to the name of the first intersected grid square 
+var region = First(Intersects(Centroid($feature), regions))
+// Retrive the Grid Code for concating later
+var gridName = region.PageName
+
+//set $featureset to variable
+var locations = $featureset
+
+// set variables to strings that will filter data later
+var filterer = "asset_id LIKE '%" + gridName + "%'"
+var triggerfilterer = "asset_id LIKE '" + $feature.asset_id + "'"
+
+//Filter data to specified Grid Code
+var selectedLocations = Filter(locations, filterer)
+//Count number of features with Grid Code
+var selectedCount = Count(selectedLocations)
+
+//Declare variable for When Statment: When count IS NOT 0, order filtered features in decending ID. When count IS 0, order entire feature set in ascending ID. "n/a" is default. 
+var sortedLocations
+When(selectedCount != 0, sortedLocations = OrderBy(selectedLocations, "asset_id DESC"), selectedCount == 0, sortedLocations = OrderBy($featureset, "asset_id ASC"), "n/a")
+
+//The variable below take the first entry/feature from sortedLocations, strips the number from the ID, and adds 1 to it. 
+var lastEntry = First(sortedLocations)
+var commentField = lastEntry.asset_id
+var fourDigits = Right(commentField, 4)
+var integerNumber = Number(fourDigits)
+var plusOne = integerNumber + 1
+
+//Declare variable for When Statement: When count IS NOT 0, format plusOne into string with leading zeros. When count IS 0, formatedPluseOne = "0001". "n/a" is default.
+var formatedPlusOne
+When(selectedCount != 0, formatedPlusOne = Text(plusOne, "0000"), selectedCount == 0, formatedPlusOne = "0001", "n/a")
+
+//Delcare variable for When Statement below. 
+var formatedWithGrid
+
+//Filters and counts the Feature Set by the current Feature's ID. Used in When Statment below. 
+var triggerSelection = Filter($featureset, triggerfilterer)
+var triggerCount = Count(triggerSelection)// Is 0 when creating new feature. Is 1 when editing existing feature. 
+
+//When count IS 0, concatinate new ID. When count is 1, return existing ID. "n/a" is default.
+When(triggerCount == 0, formatedWithGrid = "CV_" + gridName + "_" + formatedPlusOne, triggerCount == 1, formatedWithGrid = $feature.asset_id, "n/a")
+//return formated ID with Grid Code
+return formatedWithGrid
