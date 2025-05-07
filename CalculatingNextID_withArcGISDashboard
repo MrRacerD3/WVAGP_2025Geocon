@@ -1,0 +1,28 @@
+// This expression is used to calculate the next ID for Projects (PROJ)
+// Uses what I would call "Reg Ex Lite" to strip, edit, and format IDs. 
+
+var lastID = $datapoint.project_identifier
+
+var fourDigits = Right(lastID, 4)
+
+var frontEnd = Left(lastID, 8)
+
+var integerNumber = Number(fourDigits)
+
+var plusOne = integerNumber + 1
+
+var formatedPlusOne = Text(plusOne, "0000")
+
+var formatedWithGrid = frontEnd + formatedPlusOne
+
+//This entire section can be used to create custom formating
+return {
+  textColor: '',
+  backgroundColor: '',
+  separatorColor:'',
+  selectionColor: '',
+  selectionTextColor: '',
+   attributes: {
+     formatedWithGrid: formatedWithGrid
+     }
+}
