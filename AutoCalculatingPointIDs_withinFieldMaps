@@ -1,0 +1,54 @@
+// This code snippit is used to calculate a unique ID for Manholes (MH). 
+// It uses a Grid to asign a "region code" and IDs are auto incrementing within each individual Grid Square.
+
+// Declare Variable and set it to array of grid square names
+var regions = FeatureSetByName($map, "Martinsburg_City_Grid_GridOnly", ['PageName'])
+
+// Declare Variable and set it to the name of the first intersected grid square 
+var region = First(Intersects($feature, regions))
+
+var gridName = region.PageName
+
+var locations = $featureset
+
+var selectedLocations = Intersects(locations, region)
+
+var selectedCount = Count(selectedLocations)
+
+if (selectedCount == 0) {
+    var formatedPlusOne = "0001"
+
+} else {
+    var sortedLocations = OrderBy(selectedLocations, "asset_id DESC")
+
+    var lastEntry = First(sortedLocations)
+
+    var commentField = lastEntry.asset_id
+
+    var fourDigits = Right(commentField, 4)
+
+    var integerNumber = Number(fourDigits)
+
+    var plusOne = integerNumber + 1
+
+    var formatedPlusOne = Text(plusOne, "0000")
+
+}
+
+var formatedWithGrid = "MH_" + gridName + "_" + formatedPlusOne
+
+// Check if region is valid
+if (!IsEmpty(region) && region['PageName'] != null) {
+            
+    // If comment is empty, auto calculate field. Else, return comment. Add "!" to front to check if code works. 
+    if (IsEmpty($feature.asset_id)) {
+        
+        return formatedWithGrid
+    } 
+    return $feature.asset_id
+} else {
+    // If no valid intersection, return an empty string or another default value
+    // Note: Returning an empty string means no value will be set unless you want to set a different default.
+    return ""; 
+}
+
